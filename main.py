@@ -1,4 +1,4 @@
-import calibragem, captura #, escalonamento, exibicao
+import calibragem, captura , escalonamento#, exibicao
 from pathlib import Path
 import json
 
@@ -19,7 +19,6 @@ if __name__ == '__main__':
 	# captura
 	coords = captura.capturar()
 	print(f'coords = {coords}')
-
-	#coords = escalonamento(escala, coords)
+	coords = escalonamento.escalonamento(escala, coords)
 	
 	#exibicao(coords)
