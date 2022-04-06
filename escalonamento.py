@@ -33,4 +33,3 @@ def escalonar(escala, coords):
     with open("cache/escalonamento.json", 'w') as f:
         json.dump(coords.tolist(), f, indent=2, default = default)
     return coords
-    
