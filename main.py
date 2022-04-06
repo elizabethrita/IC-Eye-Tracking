@@ -36,7 +36,7 @@ if __name__ == '__main__':
 	if ('-c' in sys.argv or '--cache' in sys.argv) and Path(CACHE_ESCALONAMENTO).exists():
 		print('Tentando obter escalonamento do cache...')
 		with open(CACHE_ESCALONAMENTO, 'r') as f:
-			coords = json.load(f)
+			coords = json.load(f)		
 	else:
 		print('Realizando novo escalonamento...')
 		coords = escalonamento.escalonar(escala_webcam, coords)
