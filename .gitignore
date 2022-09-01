@@ -105,3 +105,9 @@ venv.bak/
 /exemplo_foto.jpg
 /Video_ET.mp4
 */.idea/
+
+/cache
+
+*.sh
+*.zip
+.vscode/
