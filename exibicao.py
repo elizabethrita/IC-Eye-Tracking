@@ -1,4 +1,5 @@
 from doctest import testfile
+from turtle import width
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -11,6 +12,7 @@ from datetime import datetime, timedelta
 from scipy.stats import iqr
 from PIL import Image
 from calibragem import obter_resolucao_tela
+from skimage import io
 
 def freedman_diaconis_rule(data_x,data_y):
 
@@ -28,38 +30,29 @@ def exibir(coords):
 
     data_x,data_y = [v[1] for v in coords],[v[2] for v in coords]
     bin_count_x,bin_count_y = freedman_diaconis_rule(data_x,data_y)
-    fig = px.density_heatmap(coords, x=data_x, y=data_y, nbinsx=bin_count_x, nbinsy=bin_count_y)
-   
-    #fig.add_traces(go.Scatter(
-   #     x=[610,875],y=[610,625],mode="markers", marker=dict(color='LightSkyBlue', size=20), name="Ground Truth", hoverinfo="skip")
-  #  )
-  
     width,height = obter_resolucao_tela()
-    bg_image = Image.open("./assets/planeta.png")
-    fig.add_layout_image(
-        dict(
-            source=bg_image,
-            opacity=0.5,
-            name = "teste",
-            xref="x",
-            yref="y",
-            x=0,
-            y=height,
-            sizex= width,
-            sizey=height,
-            sizing="fill",
-            layer="above"
-        )
+
+    fig = px.density_heatmap(coords, x=data_x, y=data_y, nbinsx=64, nbinsy=36, range_x=[0,width], range_y=[0,height])
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        images= [
+            dict(
+                source=Image.open("./assets/planeta.png"),
+                xref="x", 
+                yref="y",
+                x=0,
+                y=height,
+                sizex=width, 
+                sizey=height,
+                xanchor="left",
+                yanchor="top",
+                sizing="stretch",
+                layer="above",
+                opacity=0.5
+            )    
+        ]
     )
 
     fig.show()
-   
-
-   
-
-
-    #print('Showing pizza plot.')
-    #labels = ['Left_Gaze', 'Right_Gaze']
-    #values = [contadorLeft, contadorRight]
-    #fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-    #fig.show()
