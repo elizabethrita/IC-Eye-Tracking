@@ -63,13 +63,13 @@ def capturar_cantos_webcam():
             # +------B------+
 
             last_pos = curr_pos
-            if elapsed_time < 3.0:
+            if elapsed_time < 15.0:
                 curr_pos = 'esquerda'
-            elif 3.0 <= elapsed_time < 6.0:
+            elif 15.0 <= elapsed_time < 30.0:
                 curr_pos = 'cima'
-            elif 6.0 <= elapsed_time < 9.0:
+            elif 30.0 <= elapsed_time < 45.0:
                 curr_pos = 'direita'
-            elif 9.0 <= elapsed_time < 12.0:
+            elif 45.0 <= elapsed_time < 60.0:
                 curr_pos = 'baixo'
             else:
                 print(f'Main loop finished after {str(int(elapsed_time))} seconds.')
@@ -95,7 +95,7 @@ def capturar_cantos_webcam():
 
     return lista_gaze_x,lista_gaze_y
 
-def obter_limites_webcam(vet,qtd=3):
+def obter_limites_webcam(vet,qtd=20):
     print(f'entrou no metodo obter_limites()')
     # ordenar o vetor de forma crescente
     vet.sort()
