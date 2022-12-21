@@ -47,6 +47,9 @@ def capturar_cantos_webcam():
         _, frame = webcam.read()
         # We send this frame to GazeTracking to analyze it
         gaze.refresh(frame)
+        frame = gaze.annotated_frame()
+        # get the x,y coordinate for the right pupil
+        right_pupils_coord = gaze.pupil_left_coords()
 
         current_time = time.time()
         elapsed_time = current_time - start_time
@@ -74,16 +77,20 @@ def capturar_cantos_webcam():
             else:
                 print(f'Main loop finished after {str(int(elapsed_time))} seconds.')
                 break
+            current_img = cv2.imread(f'./assets/img_{curr_pos}.png')
+            print(right_pupils_coord)
+            cv2.circle(current_img, (right_pupils_coord if right_pupils_coord else (0,0)), radius=10, color=(255, 0, 0), thickness=-1)
+            cv2.imshow(window_name, frame)
 
-            if curr_pos != last_pos:
-                print(f'desenhando')
-                cv2.imshow(window_name, cv2.imread(f'./assets/img_{curr_pos}.png'))
+            #if curr_pos != last_pos:
+            #    print(f'desenhando')
+            #    #cv2.imshow(window_name, current_img)
 
             print(f'elapsed_time = {elapsed_time} last_pos = {last_pos} curr_pos = {curr_pos}')
 
             lista_gaze_x.append(gaze_x)
             lista_gaze_y.append(gaze_y)
-            
+
             time.sleep(0.1)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -93,9 +100,10 @@ def capturar_cantos_webcam():
     webcam.release()
     cv2.destroyAllWindows()
 
-    return lista_gaze_x,lista_gaze_y
+    return lista_gaze_x, lista_gaze_y
 
-def obter_limites_webcam(vet,qtd=3):
+
+def obter_limites_webcam(vet, qtd=3):
     print(f'entrou no metodo obter_limites()')
     # ordenar o vetor de forma crescente
     vet.sort()
@@ -107,7 +115,8 @@ def obter_limites_webcam(vet,qtd=3):
     # max = media dos 'qtd' ultimos valores
     v_max = np.mean(vet_filtered[-qtd:])
     print(f'v_maximo = {v_max}')
-    return v_min,v_max
+    return v_min, v_max
+
 
 def calibrar():
     print(f'entrou no metodo calibragem()')
