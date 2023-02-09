@@ -6,6 +6,7 @@ import seaborn as sns
 sns.set_theme()
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly import offline
 import tkinter as tk
 from tkinter import filedialog as fd
 from datetime import datetime, timedelta
@@ -28,16 +29,18 @@ def freedman_diaconis_rule(data_x,data_y):
 
 def exibir(coords):
 
-    data_x,data_y = [v[1] for v in coords],[v[2] for v in coords]
+    data_x, data_y = [v[1] for v in coords],[v[2] for v in coords]
+    
     bin_count_x,bin_count_y = freedman_diaconis_rule(data_x,data_y)
-    width,height = obter_resolucao_tela()
+
+    width, height = obter_resolucao_tela()
 
     fig = px.density_heatmap(coords, x=data_x, y=data_y, nbinsx=64, nbinsy=36, range_x=[0,width], range_y=[0,height])
 
     fig.update_layout(
         width=width,
         height=height,
-        images= [
+        images=[
             dict(
                 source=Image.open("./assets/planeta.png"),
                 xref="x", 
@@ -54,5 +57,6 @@ def exibir(coords):
             )    
         ]
     )
-
+    
     fig.show()
+   # offline.plot(fig)

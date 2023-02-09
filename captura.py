@@ -73,7 +73,6 @@ def capturar():
     print(f'Initializing gaze tracking.')
     gaze = GazeTracking()
     webcam = cv2.VideoCapture(0)
-
     start_delay = 3 # seconds
     print(f'Video will start in {start_delay} seconds.')
     time.sleep(start_delay)
@@ -87,7 +86,7 @@ def capturar():
     print(f'Main loop started (duration = {duration}).')
 
     while True:
-
+        
         # We get a new frame from the webcam
         current_time = datetime.now()
         _, frame = webcam.read()
