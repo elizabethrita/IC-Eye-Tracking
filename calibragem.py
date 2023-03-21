@@ -8,11 +8,13 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 from gaze_tracking import GazeTracking
-
+from datetime import datetime, timedelta
 
 def obter_resolucao_tela():
     root = tkinter.Tk()
     root.withdraw()
+    print (root.winfo_screenwidth())
+    print (root.winfo_screenheight())
     return root.winfo_screenwidth(), root.winfo_screenheight()
 
 def escalonar(pontos_x, pontos_y):
@@ -20,6 +22,10 @@ def escalonar(pontos_x, pontos_y):
     pontos_x = MinMaxScaler(feature_range=(0, res_x)).fit_transform([[x] for x in pontos_x])
     pontos_y = MinMaxScaler(feature_range=(0, res_y)).fit_transform([[y] for y in pontos_y])
     return pontos_x, pontos_y
+
+def escalona_ponto(ponto_x, ponto_y):
+    res_x, res_y = obter_resolucao_tela()
+    return ponto_x*res_x, ponto_y*res_y
 
 def remover_outliers(pontos_x, pontos_y):
 
@@ -52,7 +58,7 @@ def plotar_k_means(pontos_x, pontos_y, escalonar=False):
         pontos.append(np.asarray([pontos_x[i], pontos_y[i]]))
     pontos = np.asarray(pontos)
 
-    km = KMeans(n_clusters=4, init='random', n_init=10, max_iter=300, tol=1e-04, random_state=42)
+    km = KMeans(n_clusters=5, init='random', n_init=10, max_iter=300, tol=1e-04, random_state=42)
     y_km = km.fit_predict(pontos)
 
     # plot the 3 clusters
@@ -81,7 +87,13 @@ def plotar_k_means(pontos_x, pontos_y, escalonar=False):
         pontos[y_km == 3, 0], pontos[y_km == 3, 1],
         s=50, c='#2b83ba',
         marker='v', edgecolor='black',
-        label='cluster 3'
+        label='cluster 4'
+    )
+    plt.scatter(
+        pontos[y_km == 4, 0], pontos[y_km == 4, 1],
+        s=50, c='#7f03fc',
+        marker='v', edgecolor='black',
+        label='cluster 5'
     )
 
     # plot the centroids
@@ -113,6 +125,13 @@ def capturar_cantos_webcam():
     cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
     cv2.moveWindow(window_name, 0, 0)
     cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    #criando listas para salvar as coordenadas escalonadas juntos com o tempo e independentes (esq,cima,dir,baixo,centro)
+    left_cal = []
+    right_cal = []
+    top_cal = []
+    bottom_cal = []
+    middle_cal = []
 
     lista_gaze_x = []
     lista_gaze_y = []
@@ -146,23 +165,34 @@ def capturar_cantos_webcam():
         if gaze_x != None and gaze_y != None:
 
             # +------C------+
-            # |             |
-            # E             D
-            # |             |
+            # |      |      |
+            # E------C------D
+            # |      |      |
             # +------B------+
 
             last_pos = curr_pos
-            if elapsed_time < 5.0:
+            if elapsed_time < 10.0:
                 curr_pos = 'esquerda'
-            elif 5.0 <= elapsed_time < 10.0:
+                left_cal.append((*escalona_ponto(gaze_x,gaze_y),elapsed_time,curr_pos[0]))
+            elif 10.0 <= elapsed_time < 20.0:
                 curr_pos = 'cima'
-            elif 10.0 <= elapsed_time < 15.0:
+                top_cal.append((*escalona_ponto(gaze_x,gaze_y),elapsed_time,curr_pos[0]))
+            elif 20.0 <= elapsed_time < 30.0:
                 curr_pos = 'direita'
-            elif 15.0 <= elapsed_time < 20.0:
+                right_cal.append((*escalona_ponto(gaze_x,gaze_y),elapsed_time,curr_pos[0]))
+            elif 30.0 <= elapsed_time < 40.0:
                 curr_pos = 'baixo'
+                bottom_cal.append((*escalona_ponto(gaze_x,gaze_y),elapsed_time,curr_pos[0]))
+            elif 40.0 <= elapsed_time < 50.0:
+                curr_pos = 'meio'
+                middle_cal.append((*escalona_ponto(gaze_x,gaze_y),elapsed_time,curr_pos[0]))
             else:
                 print(f'Main loop finished after {str(int(elapsed_time))} seconds.')
                 break
+            
+            print(WEBCAM_HEIGHT)
+            print(WEBCAM_WIDTH)
+
             current_img = cv2.imread(f'./assets/img_{curr_pos}.png')
             print(right_pupils_coord)
             cv2.circle(current_img, (right_pupils_coord if right_pupils_coord else (0,0)), radius=10, color=(255, 0, 0), thickness=-1)
@@ -177,11 +207,23 @@ def capturar_cantos_webcam():
             lista_gaze_x.append(gaze_x)
             lista_gaze_y.append(gaze_y)
 
-            time.sleep(0.1)
+            time.sleep(0.05)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             print(f'Main loop finished after {str(int(elapsed_time))} seconds.')
             break
+
+    left_cal = left_cal[10:]
+    top_cal = top_cal[10:]
+    right_cal = right_cal[10:]
+    bottom_cal = bottom_cal[10:]
+    middle_cal = middle_cal[10:]
+
+    armazenar_lista_de_coordenadas(left_cal, "coords_esquerda")
+    armazenar_lista_de_coordenadas(top_cal, "coords_cima")
+    armazenar_lista_de_coordenadas(right_cal, "coords_direita")
+    armazenar_lista_de_coordenadas(bottom_cal, "coords_baixo")
+    armazenar_lista_de_coordenadas(middle_cal, "coords_meio")
 
     webcam.release()
     cv2.destroyAllWindows()
@@ -194,8 +236,11 @@ def capturar_cantos_webcam():
 
     return lista_gaze_x, lista_gaze_y
 
+def armazenar_lista_de_coordenadas(vet,nome):
+    with open(f"cache/{nome}.json", 'w') as f:
+        json.dump(vet, f, indent=2)
 
-def obter_limites_webcam(vet, qtd=3):
+def obter_limites_webcam(vet, qtd=30):
     print(f'entrou no metodo obter_limites()')
     # ordenar o vetor de forma crescente
     vet.sort()

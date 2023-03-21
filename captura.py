@@ -97,8 +97,9 @@ def capturar():
 
         gaze_x_ratio = gaze.horizontal_ratio()
         gaze_y_ratio = gaze.vertical_ratio()
-
-        if time_delta > timedelta(milliseconds=100):
+        print("gaze x", gaze_x_ratio)
+        print("gaze y",gaze_y_ratio)
+        if time_delta > timedelta(milliseconds=50):
             
             if gaze_x_ratio != None and gaze_y_ratio != None:
 
