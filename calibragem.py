@@ -51,11 +51,12 @@ def remover_outliers(pontos_x, pontos_y):
 
     return df['x'].to_numpy(), df['y'].to_numpy()
 
-def plotar_k_means(pontos_x, pontos_y, escalonar=False):
+def plotar_k_means(pontos_x, pontos_y, titulo, escalonar=False):
 
     pontos = []
-    for i in range(0, len(pontos_x)):
-        pontos.append(np.asarray([pontos_x[i], pontos_y[i]]))
+    for pos in ['esquerda', 'cima', 'direita', 'baixo', 'meio']:
+        for i in range(0, len(pontos_x[pos])):
+            pontos.append(np.asarray([pontos_x[pos][i], pontos_y[pos][i]]))
     pontos = np.asarray(pontos)
 
     km = KMeans(n_clusters=5, init='random', n_init=10, max_iter=300, tol=1e-04, random_state=42)
@@ -105,7 +106,10 @@ def plotar_k_means(pontos_x, pontos_y, escalonar=False):
     )
     plt.legend(scatterpoints=1)
     plt.grid()
+    plt.title(titulo)
     plt.show(block=True)
+    plt.savefig(titulo + ".png")
+   
 
 def capturar_cantos_webcam():
     print(f'entrou no metodo capturar_cantos()')
@@ -133,16 +137,33 @@ def capturar_cantos_webcam():
     bottom_cal = []
     middle_cal = []
 
-    lista_gaze_x = []
-    lista_gaze_y = []
+    lista_gaze_x = {
+        'esquerda': [],
+        'cima': [],
+        'direita': [],
+        'baixo': [],
+        'meio': []
+    }
+    lista_gaze_y = {
+        'esquerda': [],
+        'cima': [],
+        'direita': [],
+        'baixo': [],
+        'meio': []
+    }
+
+    # lista_gaze_x = []
+    # lista_gaze_y = []
     elapsed_time = 0
     gaze = GazeTracking()
     webcam = cv2.VideoCapture(0)
 
+    SCREEN_WIDTH, SCREEN_HEIGHT = obter_resolucao_tela()
+    print(f'SCREEN_WIDTH = {SCREEN_WIDTH}, SCREEN_HEIGHT = {SCREEN_HEIGHT}')
     WEBCAM_WIDTH = int(webcam.get(cv2.CAP_PROP_FRAME_WIDTH))
     WEBCAM_HEIGHT = int(webcam.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print(f'WEBCAM_WIDTH = {WEBCAM_WIDTH}, WEBCAM_HEIGHT = {WEBCAM_HEIGHT}')
-    blank_image = np.zeros((WEBCAM_HEIGHT,WEBCAM_WIDTH,3), dtype=np.uint8) + 255
+    # blank_image = np.zeros((SCREEN_WIDTH, SCREEN_HEIGHT, 3), dtype=np.uint8) + 255
 
     curr_pos = 'nenhuma'
     start_time = time.time()  # inicia tempo dentro do while
@@ -153,7 +174,8 @@ def capturar_cantos_webcam():
         # We send this frame to GazeTracking to analyze it
         gaze.refresh(frame)
         frame = gaze.annotated_frame()
-        # get the x,y coordinate for the right pupil
+        # get the x,y coordinate for both pupils
+        left_pupils_coord = gaze.pupil_left_coords()
         right_pupils_coord = gaze.pupil_right_coords()
 
         current_time = time.time()
@@ -161,6 +183,11 @@ def capturar_cantos_webcam():
 
         gaze_x = gaze.horizontal_ratio()
         gaze_y = gaze.vertical_ratio()
+        
+        try:
+            gaze_x_y = (int(gaze_x * WEBCAM_WIDTH), int(gaze_y * WEBCAM_HEIGHT))
+        except:
+            gaze_x_y = (0,0)
 
         if gaze_x != None and gaze_y != None:
 
@@ -193,9 +220,11 @@ def capturar_cantos_webcam():
             print(WEBCAM_HEIGHT)
             print(WEBCAM_WIDTH)
 
-            current_img = cv2.imread(f'./assets/img_{curr_pos}.png')
-            print(right_pupils_coord)
-            cv2.circle(current_img, (right_pupils_coord if right_pupils_coord else (0,0)), radius=10, color=(255, 0, 0), thickness=-1)
+            current_img = cv2.imread(f'./assets/tamanho_tela/img_{curr_pos}.png')
+            print(left_pupils_coord, right_pupils_coord)
+            #cv2.circle(current_img, (left_pupils_coord if left_pupils_coord else (0,0)), radius=10, color=(216,179,101), thickness=-1)
+            #cv2.circle(current_img, (right_pupils_coord if right_pupils_coord else (0,0)), radius=10, color=(90,180,172), thickness=-1)
+            #cv2.circle(current_img, gaze_x_y, radius=10, color=(175,141,195), thickness=-1)
             cv2.imshow(window_name, current_img)
 
           #  if curr_pos != last_pos:
@@ -204,8 +233,10 @@ def capturar_cantos_webcam():
 
             print(f'elapsed_time = {elapsed_time} last_pos = {last_pos} curr_pos = {curr_pos}')
 
-            lista_gaze_x.append(gaze_x)
-            lista_gaze_y.append(gaze_y)
+            # lista_gaze_x.append(gaze_x)
+            # lista_gaze_y.append(gaze_y)
+            lista_gaze_x[curr_pos].append(gaze_x)
+            lista_gaze_y[curr_pos].append(gaze_y)
 
             time.sleep(0.05)
 
@@ -228,11 +259,14 @@ def capturar_cantos_webcam():
     webcam.release()
     cv2.destroyAllWindows()
 
+   
+    plotar_k_means(pontos_x=lista_gaze_x, pontos_y=lista_gaze_y, titulo = "com_outliers")
+
     # lista_gaze_x, lista_gaze_y = escalonar(lista_gaze_x, lista_gaze_y)
+    for pos in ['esquerda', 'cima', 'direita', 'baixo', 'meio']:
+        lista_gaze_x[pos], lista_gaze_y[pos] = remover_outliers(pontos_x=lista_gaze_x[pos], pontos_y=lista_gaze_y[pos])
 
-    lista_gaze_x, lista_gaze_y = remover_outliers(pontos_x=lista_gaze_x, pontos_y=lista_gaze_y)
-
-    plotar_k_means(pontos_x=lista_gaze_x, pontos_y=lista_gaze_y)
+    plotar_k_means(pontos_x=lista_gaze_x, pontos_y=lista_gaze_y, titulo = "sem_outliers")
 
     return lista_gaze_x, lista_gaze_y
 
@@ -240,9 +274,10 @@ def armazenar_lista_de_coordenadas(vet,nome):
     with open(f"cache/{nome}.json", 'w') as f:
         json.dump(vet, f, indent=2)
 
-def obter_limites_webcam(vet, qtd=30):
+def obter_limites_webcam(dict, qtd=30):
     print(f'entrou no metodo obter_limites()')
     # ordenar o vetor de forma crescente
+    vet = np.concatenate([v for v in dict.values()]).tolist()
     vet.sort()
     # filtra o vetor removendo valores invalidos
     vet_filtered = [i for i in vet if i != None]
