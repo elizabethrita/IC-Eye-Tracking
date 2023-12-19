@@ -14,6 +14,9 @@ from scipy.stats import iqr
 from PIL import Image
 from calibragem import obter_resolucao_tela
 from skimage import io
+from gaze_tracking import GazeTracking
+
+gaze = GazeTracking()
 
 def freedman_diaconis_rule(data_x,data_y):
 
@@ -27,36 +30,39 @@ def freedman_diaconis_rule(data_x,data_y):
 
     return bin_count_x,bin_count_y
 
-def exibir(coords):
+def exibir(coords,method=''):
 
     data_x, data_y = [v[1] for v in coords],[v[2] for v in coords]
     
-    bin_count_x,bin_count_y = freedman_diaconis_rule(data_x,data_y)
+    bin_count_x, bin_count_y = freedman_diaconis_rule(data_x,data_y)
 
     width, height = obter_resolucao_tela()
 
-    fig = px.density_heatmap(coords, x=data_x, y=data_y, nbinsx=64, nbinsy=36, range_x=[0,width], range_y=[0,height])
-
+    fig = px.density_heatmap(coords, x=data_x, y=data_y, nbinsx=64, nbinsy=32, range_x=[0,width], range_y=[0,height],title="Método " + method)
     fig.update_layout(
         width=width,
         height=height,
         images=[
             dict(
-                source=Image.open("./assets/planeta.png"),
-                xref="x", 
+                source=Image.open("./assets/video_novo.png"),
+                xref="x",
                 yref="y",
                 x=0,
                 y=height,
-                sizex=width, 
+                sizex=width,
                 sizey=height,
                 xanchor="left",
                 yanchor="top",
                 sizing="stretch",
                 layer="above",
-                opacity=0.5
+                opacity=0.2
             )    
         ]
     )
     
+    image_path = 'resultados/'
+    titulo_lower = method.lower()
+    titulo_res = "-".join(titulo_lower.split())
+    fig.write_image(f'{image_path}{titulo_res}.png')
     fig.show()
    # offline.plot(fig)

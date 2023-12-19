@@ -12,7 +12,10 @@ CACHE_CAPTURA = './cache/captura.json'
 CACHE_ESCALONAMENTO = './cache/escalonamento.json'
 
 if __name__ == '__main__':
-
+	#s / r
+	tipo_calibragem = 's'
+	#iqr/ecod/lof/sem
+	metodo_outlier = 'sem'
 	# calibragem
 	if ('-c' in sys.argv or '--cache' in sys.argv) and Path(CACHE_CALIBRAGEM).exists():
 		print('Tentando obter calibragem do cache...')
@@ -20,7 +23,7 @@ if __name__ == '__main__':
 			resultado_calibragem = json.load(f)
 	else:
 		print('Realizando nova calibragem...')
-		resultado_calibragem = calibragem.calibrar()
+		resultado_calibragem = calibragem.calibrar(type=tipo_calibragem, outlier_method=metodo_outlier)
 	escala_webcam = resultado_calibragem[:4]
 	resolucao_tela = resultado_calibragem[4:]
 	# print(f'escala_webcam = {escala_webcam}')
@@ -50,4 +53,4 @@ if __name__ == '__main__':
 	
 	# exibicao
 	print('Exibindo mapa de calor...')
-	exibicao.exibir(coords)
+	exibicao.exibir(coords,method=f'{metodo_outlier} {tipo_calibragem}')
